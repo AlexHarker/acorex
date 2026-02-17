@@ -84,6 +84,10 @@ Utilities::AudioSettingsManager::AudioSettingsManager ( )
         }
     }
 
+    // temp for laptop windows build for tomorrow's performance
+    currentApiIndex = 2; // 0 is WASAPI, 1 is ASIO, 2 is DirectSound
+    currentAudioDeviceIndex = 1; // 0 no output, 1 is "Primary Sound Device", 2 is pulse audio
+
     bool defaultDeviceFound = FindDefaultDeviceIndex ( currentApiIndex, currentAudioDeviceIndex );
     if ( !defaultDeviceFound ) { currentAudioDeviceIndex = DEFAULT_OUT_DEVICE_INDEX; }
 };

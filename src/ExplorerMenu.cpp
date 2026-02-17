@@ -197,6 +197,32 @@ void ExplorerMenu::UpdateOscReceiver ( )
                 ofLogVerbose ( "OSC-CONTROL-RECEIVER" ) << "Received create random playhead message for receiver index " << mControlReceiverIndex << ".";
                 mLiveView.CreatePlayheadRandom ( );
             }
+            else if ( messageAddress == "/delete_first_playhead" )
+            {
+                ofLogVerbose ( "OSC-CONTROL-RECEIVER" ) << "Received delete first playhead message for receiver index " << mControlReceiverIndex << ".";
+                if ( !mLiveView.GetPlayheads ( ).empty ( ) )
+                {
+                    size_t playheadID = mLiveView.GetPlayheads ( )[0].playheadID;
+                    mLiveView.KillPlayhead ( playheadID );
+                }
+            }
+            else if ( messageAddress == "/delete_all_playheads" )
+            {
+                ofLogVerbose ( "OSC-CONTROL-RECEIVER" ) << "Received delete all playheads message for receiver index " << mControlReceiverIndex << ".";
+                for ( auto& playhead : mLiveView.GetPlayheads ( ) )
+                {
+                    mLiveView.KillPlayhead ( playhead.playheadID );
+                }
+            }
+            else if ( messageAddress == "/delete_last_playhead" )
+            {
+                ofLogVerbose ( "OSC-CONTROL-RECEIVER" ) << "Received delete last playhead message for receiver index " << mControlReceiverIndex << ".";
+                if ( !mLiveView.GetPlayheads ( ).empty ( ) )
+                {
+                    size_t playheadID = mLiveView.GetPlayheads ( ).back ( ).playheadID;
+                    mLiveView.KillPlayhead ( playheadID );
+                }
+            }
         }
     }
 }

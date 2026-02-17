@@ -79,9 +79,15 @@ void Utilities::MIDIHub::Update ( )
         // control 1, 3, 5, 7 - jump chance - (faders) (oXoXoXoX)
         // control 16, 18, 20, 22 - pan width - (knobs) (XoXoXoXo)
         // control 17, 19, 21, 23 - crossfade sample length - (knobs) (oXoXoXoX)
+		
 		// control 32, 34, 36, 38 - create playhead at picker point - (S button)
+        // control 33, 35, 37, 39 - delete first playhead - (S button)
+		
 		// control 48, 50, 52, 54 - pick random point - (M button)
+        // control 49, 51, 53, 55 - delete all playheads - (M button)
+		
 		// control 64, 66, 68, 70 - create playhead at random point - (R button)
+		// control 65, 67, 69, 71 - delete last playhead - (R button)
 
 		bool volumeMessage = false;
         bool jumpChanceMessage = false;
@@ -90,22 +96,30 @@ void Utilities::MIDIHub::Update ( )
         bool createPickerPlayheadMessage = false;
         bool pickRandomPointMessage = false;
         bool createRandomPlayheadMessage = false;
+        bool deleteFirstPlayheadMessage = false;
+        bool deleteAllPlayheadsMessage = false;
+        bool deleteLastPlayheadMessage = false;
 
         // pointer to the osc sender to send to:
         ofxOscSender* sender = nullptr;
 
-        int receiver1Controls[ ] = { 0, 1, 16, 17, 32, 48, 64 };
-        int receiver2Controls[ ] = { 2, 3, 18, 19, 34, 50, 66 };
-        int receiver3Controls[ ] = { 4, 5, 20, 21, 36, 52, 68 };
-        int receiver4Controls[ ] = { 6, 7, 22, 23, 38, 54, 70 };
+        int receiver1Controls[ ] = { 0, 1, 16, 17, 32, 33, 48, 49, 64, 65 };
+        int receiver2Controls[ ] = { 2, 3, 18, 19, 34, 35, 50, 51, 66, 67 };
+        int receiver3Controls[ ] = { 4, 5, 20, 21, 36, 37, 52, 53, 68, 69 };
+        int receiver4Controls[ ] = { 6, 7, 22, 23, 38, 39, 54, 55, 70, 71 };
 
 		int volumeControls[ ] = { 0, 2, 4, 6 };
 		int jumpChanceControls[ ] = { 1, 3, 5, 7 };
 		int panWidthControls[ ] = { 16, 18, 20, 22 };
         int crossfadeSampleLengthControls[ ] = { 17, 19, 21, 23 };
+
         int createPickerPlayheadControls[ ] = { 32, 34, 36, 38 };
         int pickRandomPointControls[ ] = { 48, 50, 52, 54 };
         int createRandomPlayheadControls[ ] = { 64, 66, 68, 70 };
+
+		int deleteFirstPlayheadControls[ ] = { 33, 35, 37, 39 };
+		int deleteAllPlayheadsControls[ ] = { 49, 51, 53, 55 };
+        int deleteLastPlayheadControls[ ] = { 65, 67, 69, 71 };
 
 		if ( std::find ( std::begin ( receiver1Controls ), std::end ( receiver1Controls ), midiMessages[0].control ) != std::end ( receiver1Controls ) )
 		{
@@ -153,6 +167,18 @@ void Utilities::MIDIHub::Update ( )
 			else if ( std::find ( std::begin ( createRandomPlayheadControls ), std::end ( createRandomPlayheadControls ), midiMessages[0].control ) != std::end ( createRandomPlayheadControls ) )
 			{
 				createRandomPlayheadMessage = true;
+            }
+			else if ( std::find ( std::begin ( deleteFirstPlayheadControls ), std::end ( deleteFirstPlayheadControls ), midiMessages[0].control ) != std::end ( deleteFirstPlayheadControls ) )
+			{
+				deleteFirstPlayheadMessage = true;
+			}
+			else if ( std::find ( std::begin ( deleteAllPlayheadsControls ), std::end ( deleteAllPlayheadsControls ), midiMessages[0].control ) != std::end ( deleteAllPlayheadsControls ) )
+			{
+				deleteAllPlayheadsMessage = true;
+			}
+			else if ( std::find ( std::begin ( deleteLastPlayheadControls ), std::end ( deleteLastPlayheadControls ), midiMessages[0].control ) != std::end ( deleteLastPlayheadControls ) )
+			{
+				deleteLastPlayheadMessage = true;
             }
 		}
 
@@ -209,6 +235,30 @@ void Utilities::MIDIHub::Update ( )
 			{
 				sender->send ( "/acorex/control/create_random_playhead", 1 );
 				ofLogVerbose ( "MIDI-PARENT" ) << "Sent OSC message: /acorex/control/create_random_playhead";
+			}
+        }
+		else if ( deleteFirstPlayheadMessage )
+		{
+			if ( midiMessages[0].value < 64 ) // only trigger on button release
+			{
+				sender->send ( "/acorex/control/delete_first_playhead", 1 );
+				ofLogVerbose ( "MIDI-PARENT" ) << "Sent OSC message: /acorex/control/delete_first_playhead";
+			}
+		}
+		else if ( deleteAllPlayheadsMessage )
+		{
+			if ( midiMessages[0].value < 64 ) // only trigger on button release
+			{
+				sender->send ( "/acorex/control/delete_all_playheads", 1 );
+				ofLogVerbose ( "MIDI-PARENT" ) << "Sent OSC message: /acorex/control/delete_all_playheads";
+			}
+		}
+		else if ( deleteLastPlayheadMessage )
+		{
+			if ( midiMessages[0].value < 64 ) // only trigger on button release
+			{
+				sender->send ( "/acorex/control/delete_last_playhead", 1 );
+				ofLogVerbose ( "MIDI-PARENT" ) << "Sent OSC message: /acorex/control/delete_last_playhead";
 			}
         }
 		else
