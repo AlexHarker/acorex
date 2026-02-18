@@ -13,8 +13,13 @@ jobs:
       contents: write
     
     steps:
+    - name: Download openFrameworks
+      run: |
+        git -c advice.detachedHead=false clone --depth 1 -b "acorex" https://github.com/fearn-e/openframeworks 
+
     - name: Checkout repository
       uses: actions/checkout@v4
+      path: openframeworks/apps/myApps/acorex
     
     - name: Setup CMake
       uses: lukka/get-cmake@latest
@@ -24,7 +29,7 @@ jobs:
     
     - name: Run build-deps script
       shell: bash
-      run: ./build-deps.sh
+      run: cd openframeworks/apps/myApps/acorex && ./build-deps.sh
     
     - name: Build solution in Release mode
       working-directory: openframeworks/apps/myApps/acorex
