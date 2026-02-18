@@ -14,9 +14,10 @@ jobs:
     
     steps:
     - name: Download openFrameworks
+      shell: bash
       run: |
         git -c advice.detachedHead=false clone --depth 1 -b "acorex" https://github.com/fearn-e/openframeworks 
-        openframeworks/scripts/vs/download_libs.sh
+        ./openframeworks/scripts/vs/download_libs.sh
 
     - name: Checkout repository
       uses: actions/checkout@v4
