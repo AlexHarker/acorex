@@ -18,7 +18,8 @@ jobs:
 
     - name: Checkout repository
       uses: actions/checkout@v4
-      path: openframeworks/apps/myApps/acorex
+      with:
+        path: openframeworks/apps/myApps/acorex
     
     - name: Setup CMake
       uses: lukka/get-cmake@latest
