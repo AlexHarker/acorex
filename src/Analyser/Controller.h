@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2024 Elowyn Fearne
+Copyright (c) 2024-2026 Elowyn Fearne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -16,10 +16,11 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 
 #pragma once
 
-#include "Utils/Data.h"
-#include "Utils/JSON.h"
+#include "Utilities/Data.h"
+#include "Utilities/JSON.h"
 #include "Analyser/GenAnalysis.h"
 #include "Analyser/UMAP.h"
+
 #include <vector>
 #include <string>
 
@@ -28,27 +29,26 @@ namespace Analyser {
 
 class Controller {
 public:
-	Controller ( ) { };
-	~Controller ( ) { };
+    Controller ( ) { };
+    ~Controller ( ) { };
 
-	bool CreateCorpus ( const std::string& inputPath, const std::string& outputPath, const Utils::AnalysisSettings& settings );
+    bool CreateCorpus ( const std::string& inputPath, const std::string& outputPath, const Utilities::AnalysisSettings& settings );
 
-	bool ReduceCorpus ( const std::string& inputPath, const std::string& outputPath, const Utils::ReductionSettings& settings );
+    bool ReduceCorpus ( const std::string& inputPath, const std::string& outputPath, const Utilities::ReductionSettings& settings );
 
-	bool InsertIntoCorpus ( const std::string& inputPath, const std::string& outputPath, const bool newReplacesExisting );
+    bool InsertIntoCorpus ( const std::string& inputPath, const std::string& outputPath, const bool newReplacesExisting );
 
 private:
-	std::vector<int> MergeDatasets ( Utils::DataSet& newDataset, const Utils::DataSet& existingDataset, const bool newReplacesExisting );
+    std::vector<int> MergeDatasets ( Utilities::DataSet& newDataset, const Utilities::DataSet& existingDataset, const bool newReplacesExisting );
 
-	bool SearchDirectory ( const std::string& directory, std::vector<std::string>& files );
+    bool SearchDirectory ( const std::string& directory, std::vector<std::string>& files );
 
-	void GenerateDimensionNames ( std::vector<std::string>& dimensionNames, const Utils::AnalysisSettings& settings );
-	void GenerateDimensionNames ( std::vector<std::string>& dimensionNames, const Utils::ReductionSettings& settings, bool time );
-	void Push7Stats ( std::string masterDimension, std::vector<std::string>& dimensionNames );
+    void GenerateDimensionNames ( std::vector<std::string>& dimensionNames, const Utilities::AnalysisSettings& settings );
+    void GenerateReducedDimensionNames ( std::vector<std::string>& dimensionNames, const Utilities::ReductionSettings& settings );
 
-	Utils::JSON mJSON;
-	Analyser::GenAnalysis mGenAnalysis;
-	Analyser::UMAP mUMAP;
+    Utilities::JSON mJSON;
+    Analyser::GenAnalysis mGenAnalysis;
+    Analyser::UMAP mUMAP;
 };
 
 } // namespace Analyser

@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2024 Elowyn Fearne
+Copyright (c) 2024-2026 Elowyn Fearne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -16,27 +16,25 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 
 #pragma once
 
-#include <data/TensorTypes.hpp>
-#include <audio_file/in_file.hpp>
+#include <flucoma/data/TensorTypes.hpp>
 #include <ofxAudioFile.h>
 #include <string>
 
 namespace Acorex {
-namespace Utils {
+namespace Utilities {
 
 class AudioFileLoader {
 public:
-	AudioFileLoader ( ) { }
-	~AudioFileLoader ( ) { }
+    AudioFileLoader ( ) { }
+    ~AudioFileLoader ( ) { }
 
-	bool ReadAudioFile ( std::string filename, fluid::RealVector& output, double targetSampleRate );
+    bool ReadAudioFile ( std::string filename, fluid::RealVector& output, double targetSampleRate );
 
 private:
-	//void ReadToMono ( std::vector<float>& output, htl::in_audio_file& file );
-	void ReadToMono ( std::vector<float>& output, ofxAudioFile& file );
+    void ReadToMono ( std::vector<float>& output, ofxAudioFile& file );
 
-	void Resample ( std::vector<float>& audio, double fileRate, double targetRate );
+    void Resample ( std::vector<float>& audio, double fileRate, double targetRate );
 };
 
-} // namespace Utils
+} // namespace Utilities
 } // namespace Acorex

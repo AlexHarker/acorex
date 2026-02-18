@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2024 Elowyn Fearne
+Copyright (c) 2024-2026 Elowyn Fearne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -16,15 +16,17 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 
 #pragma once
 
-#include "Utils/DimensionBounds.h"
-#include "./SpaceDefs.h"
-#include "./PointPicker.h"
-#include "./RawView.h"
-#include "./AudioPlayback.h"
-#include "Utils/Data.h"
+#include "Explorer/SpaceDefs.h"
+#include "Explorer/PointPicker.h"
+#include "Explorer/RawView.h"
+#include "Explorer/AudioPlayback.h"
+#include "Utilities/Data.h"
+#include "Utilities/DimensionBounds.h"
+#include "Utilities/InterfaceDefs.h"
+
 #include <ofMesh.h>
 #include <ofEasyCam.h>
-#include <ofSoundPlayer.h>
+#include <random>
 
 namespace Acorex {
 namespace Explorer {
@@ -32,112 +34,117 @@ namespace Explorer {
 class LiveView {
 public:
 
-	LiveView ( ) { }
-	~LiveView ( ) { }
+    LiveView ( );
+    ~LiveView ( ) { }
 
-	void Initialise ( );
-	void ChangeAudioSettings ( size_t bufferSize, ofSoundDevice outDevice );
-	void KillAudio ( );
-	void Exit ( );
-	void RemoveListeners ( );
+    void Initialise ( );
+    void Clear ( );
+    bool StartAudio ( std::pair<ofSoundDevice, int> audioSettings );
+    bool RestartAudio ( std::pair<ofSoundDevice, int> audioSettings ) { return StartAudio ( audioSettings ); }
+    void Exit ( );
 
-	// Process Functions ---------------------------
+    void AddListeners ( );
+    void RemoveListeners ( );
 
-	void Update ( );
-	void UpdatePlayheads ( );
-	void OLD_UpdateAudioPlayers ( );
-	void SlowUpdate ( );
-	void Draw ( );
+    // Process Functions ---------------------------
 
-	// Sound Functions ------------------------------
+    void Update ( );
+    void UpdatePlayheads ( );
+    void SlowUpdate ( );
+    void Draw ( );
 
-	void CreatePlayhead ( );
-	void KillPlayhead ( size_t playheadID );
-	void OLD_PlaySound ( );
+    // Sound Functions ------------------------------
 
-	// Filler Functions ----------------------------
+    void CreatePlayhead ( );
+    void CreatePlayhead ( size_t fileIndex, size_t timePointIndex );
+    void CreatePlayheadRandom ( );
+    void PickRandomPoint ( );
+    void KillPlayhead ( size_t playheadID );
 
-	void CreatePoints ( );
+    // Filler Functions ----------------------------
 
-	void FillDimensionTime ( int dimensionIndex, Utils::Axis axis );
-	void FillDimensionStats ( int dimensionIndex, Utils::Axis axis );
-	void FillDimensionStatsReduced ( int dimensionIndex, Utils::Axis axis );
-	void FillDimensionNone ( Utils::Axis axis );
-	void RefreshFileColors ( int fileIndex );
+    void CreatePoints ( );
 
-	// Camera Functions ----------------------------
+    void FillDimension ( int dimensionIndex, Utilities::Axis axis );
+    void ClearDimension ( Utilities::Axis axis );
+    void RefreshFileColors ( int fileIndex );
 
-	void Init3DCam ( );
-	void Init2DCam ( Utils::Axis disabledAxis );
+    // Camera Functions ----------------------------
 
-	void Zoom2DCam ( float y, bool mouse );
-	void Zoom3DCam ( float y, bool mouse );
-	void Rotate3DCam ( float x, float y, bool mouse );
-	void Pan3DCam ( float x, float y, float z, bool mouse );
+    void Init3DCam ( );
+    void Init2DCam ( Utilities::Axis disabledAxis );
 
-	// Setters & Getters ----------------------------
+    void Zoom2DCam ( float y, bool mouse );
+    void Zoom3DCam ( float y, bool mouse );
+    void Rotate3DCam ( float x, float y, bool mouse );
+    void Pan3DCam ( float x, float y, float z, bool mouse );
 
-	void SetRawView ( std::shared_ptr<RawView>& rawPointer ) { mRawView = rawPointer; }
-	void Set3D ( bool is3D ) { b3D = is3D; }
-	void SetColorFullSpectrum ( bool fullSpectrum ) { bColorFullSpectrum = fullSpectrum; }
+    // Setters & Getters ----------------------------
 
-	bool Is3D ( ) const { return b3D; }
+    void SetRawView ( std::shared_ptr<RawView>& rawPointer ) { mRawView = rawPointer; mAudioPlayback.SetRawView ( rawPointer ); }
+    void SetMenuLayout ( std::shared_ptr<Utilities::MenuLayout>& layout ) { mLayout = layout; }
+    void Set3D ( bool is3D ) { b3D = is3D; }
+    void SetColorFullSpectrum ( bool fullSpectrum ) { bColorFullSpectrum = fullSpectrum; }
 
-	std::vector<Utils::VisualPlayhead>& GetPlayheads ( ) { return mPlayheads; }
+    bool Is3D ( ) const { return b3D; }
 
-	AudioPlayback* GetAudioPlayback ( ) { return &mAudioPlayback; }
+    std::vector<Utilities::VisualPlayhead>& GetPlayheads ( ) { return mPlayheads; }
 
-	// Listener Functions --------------------------
+    AudioPlayback* GetAudioPlayback ( ) { return &mAudioPlayback; }
 
-	void KeyEvent ( ofKeyEventArgs& args );
-	void MouseEvent ( ofMouseEventArgs& args );
+    // Listener Functions --------------------------
+
+    void KeyEvent ( ofKeyEventArgs& args );
+    void MouseEvent ( ofMouseEventArgs& args );
 
 private:
-	bool bPointersShared = false;
+    bool bListenersAdded;
 
-	bool listenersAdded = false;
+    bool bDebug;
+    bool bUserPaused;
+    bool bDraw;
+    bool bDrawAxes;
+    bool bDrawCloud; bool bDrawCloudDark;
+    
+    bool bMouseCameraControl;
 
-	bool bDebug = false;
-	bool bDraw = false;
-	bool b3D = true;
-	bool bColorFullSpectrum = false;
-	bool bLoopAudio = false;
+    bool b3D;
+    bool bColorFullSpectrum;
 
-	bool mKeyboardMoveState[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // W, A, S, D, R, F, Q, E, Z, X
-	float mCamMoveSpeedScaleAdjusted = SpaceDefs::mCamMoveSpeed;
+    bool mKeyboardMoveState[10];
+    float mCamMoveSpeedScaleAdjusted;
 
-	float deltaTime = 0.1;
-	float lastUpdateTime = 0;
+    float deltaTime;
+    float lastUpdateTime;
 
-	Utils::Axis mDisabledAxis = Utils::Axis::NONE;
-	std::string xLabel = "X", yLabel = "Y", zLabel = "Z";
-	int colorDimension = -1;
+    Utilities::Axis mDisabledAxis;
+    std::string xLabel, yLabel, zLabel;
+    int colorDimension;
 
-	std::shared_ptr<RawView> mRawView; // might need to be weak_ptr?
-	std::vector<ofMesh> mTimeCorpus;
-	ofMesh mStatsCorpus;
+    std::shared_ptr<RawView> mRawView; // might need to be weak_ptr?
+    std::vector<ofMesh> mCorpusMesh;
 
-	std::vector<ofSoundPlayer> mSoundPlayers;
-	std::vector<int> mPlayingFiles;
-	std::vector<int> mPlayingTimeHeads;
-	std::vector<float> mPlayingLastPositionMS;
-	std::vector<ofColor> mPlayingLastColor;
+    // Playheads -------------------------------------
 
-	// Playheads -------------------------------------
+    std::vector<Utilities::VisualPlayhead> mPlayheads;
+    std::vector<Utilities::VisualPlayheadTrail> mPlayheadTrails;
 
-	std::vector<Utils::VisualPlayhead> mPlayheads;
+    // Camera ----------------------------------------
 
-	// Camera ----------------------------------------
+    std::shared_ptr<ofCamera> mCamera;
+    ofPoint mCamPivot;
+    int mLastMouseX, mLastMouseY;
 
-	std::shared_ptr<ofCamera> mCamera;
-	ofPoint mCamPivot = ofPoint(0, 0, 0);
-	int mLastMouseX = 0, mLastMouseY = 0;
+    // Acorex Objects ------------------------------
 
-	// Acorex Objects ------------------------------
+    Utilities::DimensionBounds mDimensionBounds;
+    std::shared_ptr<PointPicker> mPointPicker;
+    AudioPlayback mAudioPlayback;
+    std::shared_ptr<Utilities::MenuLayout> mLayout;
 
-	Utils::DimensionBounds mDimensionBounds;
-	std::shared_ptr<PointPicker> mPointPicker;
-	AudioPlayback mAudioPlayback;
+    // Randomness ----------------------------------
+
+    std::mt19937 mRandomGen;
 };
 
 } // namespace Explorer

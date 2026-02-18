@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2024 Elowyn Fearne
+Copyright (c) 2026-2026 Elowyn Fearne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -13,24 +13,43 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 #pragma once
 
-#include "Utils/Data.h"
-#include <data/FluidDataSet.hpp>
+#include <ofxMidi.h>
+#include <ofxOsc.h>
+
+#define ACOREX_OSC_PORT 13010
 
 namespace Acorex {
-namespace Utils {
+namespace Utilities {
 
-class DatasetConversion {
+class MIDIHub {
 public:
-	DatasetConversion ( ) { }
-	~DatasetConversion ( ) { }
+	MIDIHub ( );
+	~MIDIHub ( ) { }
 
-	void CorpusToFluid ( fluid::FluidDataSet<std::string, double, 1>& fluidset, const Utils::DataSet& dataset, std::vector<int>& filePointLength );
+	void Initialise ( );
+	void Update ( );
+	void Exit ( );
 
-	void FluidToCorpus ( Utils::DataSet& dataset, const fluid::FluidDataSet<std::string, double, 1>& fluidset, const std::vector<int>& filePointLength, const int reducedDimensionCount );
+	void KeyEvent ( ofKeyEventArgs& args );
+
+private:
+	void AddListeners ( );
+	void RemoveListeners ( );
+
+	bool bListenersAdded;
+
+	ofxOscSender mOscSender0;
+    ofxOscSender mOscSender1;
+    ofxOscSender mOscSender2;
+    ofxOscSender mOscSender3;
+
+	std::shared_ptr<ofxMidiIn> mMidiIn;
+
+	std::vector<ofxMidiMessage> midiMessages;
+	std::size_t maxMessages = 10;
 };
 
-} // namespace Utils
-} // namespace Acorex;
+} // namespace Utilities
+} // namespace Acorex

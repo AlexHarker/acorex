@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2024 Elowyn Fearne
+Copyright (c) 2024-2026 Elowyn Fearne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -16,12 +16,15 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 
 #pragma once
 
-#include "./RawView.h"
-#include "./PointPicker.h"
-#include "Utils/Data.h"
+#include "Explorer/RawView.h"
+#include "Explorer/PointPicker.h"
+#include "Utilities/Data.h"
+#include "Utilities/DimensionBounds.h"
+
 #include <ofSoundBuffer.h>
 #include <ofSoundStream.h>
 #include <ofMesh.h>
+#include <random>
 #include <vector>
 #include <mutex>
 #include <atomic>
@@ -31,76 +34,112 @@ namespace Explorer {
 
 class AudioPlayback {
 public:
-	AudioPlayback ( ) { }
-	~AudioPlayback ( ) { }
+    AudioPlayback ( );
+    ~AudioPlayback ( ) { }
 
-	void Initialise ( );
-	void RestartAudio ( size_t sampleRate, size_t bufferSize, ofSoundDevice outDevice );
+    bool StartRestartAudio ( size_t sampleRate, size_t bufferSize, ofSoundDevice outDevice );
+    void ClearAndKillAudio ( );
 
-	void audioOut ( ofSoundBuffer& outBuffer );
+    void audioOut ( ofSoundBuffer& outBuffer );
 
-	void SetRawView ( std::shared_ptr<RawView>& rawPointer ) { mRawView = rawPointer; }
+    void SetRawView ( std::shared_ptr<RawView>& rawPointer ) { mRawView = rawPointer; }
 
-	bool CreatePlayhead ( size_t fileIndex, size_t sampleIndex );
-	bool KillPlayhead ( size_t playheadID );
-	std::vector<Utils::VisualPlayhead> GetPlayheadInfo ( );
-	void SetFlagReset ( );
-	void WaitForResetConfirm ( );
+    bool CreatePlayhead ( size_t fileIndex, size_t timePointIndex );
+    bool KillPlayhead ( size_t playheadID );
+    std::vector<Utilities::VisualPlayhead> GetPlayheadInfo ( );
+    void SetFlagMissingOutput ( bool missing );
+    void WaitForMissingOutputConfirm ( );
 
-	void SetTimeCorpus ( const std::vector<ofMesh>& timeCorpus );
+    void UserInvokedPause ( bool pause ) { bUserPauseFlag = pause; }
 
-	void SetPointPicker ( std::shared_ptr<PointPicker>& pointPicker ) { mPointPicker = pointPicker; }
+    void SetDimensionBounds ( const Utilities::DimensionBoundsData& dimensionBoundsData );
+    void SetCorpusMesh ( const std::vector<ofMesh>& corpusMesh );
 
-	void SetLoopPlayheads ( bool loop ) { mLoopPlayheads = loop; }
-	void SetJumpSameFileAllowed ( bool allowed ) { mJumpSameFileAllowed = allowed; }
-	void SetJumpSameFileMinTimeDiff ( int timeDiff ) { mJumpSameFileMinTimeDiff = timeDiff; }
-	void SetCrossoverJumpChance ( int jumpsInAThousand ) { mCrossoverJumpChanceX1000 = jumpsInAThousand; }
-	void SetCrossfadeSampleLength ( int length ) { mCrossfadeSampleLength = length; }
-	void SetMaxJumpDistanceSpace ( int distanceX1000 ) { mMaxJumpDistanceSpaceX1000 = distanceX1000; }
-	void SetMaxJumpTargets ( int targets ) { mMaxJumpTargets = targets; }
+    void SetPointPicker ( std::shared_ptr<PointPicker>& pointPicker ) { mPointPicker = pointPicker; }
+
+    void SetLoopPlayheads ( bool loop ) { mLoopPlayheads = loop; }
+    void SetJumpSameFileAllowed ( bool allowed ) { mJumpSameFileAllowed = allowed; }
+    void SetJumpSameFileMinTimeDiff ( int timeDiff ) { mJumpSameFileMinTimeDiff = timeDiff; }
+    void SetCrossoverJumpChanceX1000 ( int jumpsInAThousand ) { mCrossoverJumpChanceX1000 = jumpsInAThousand; }
+    void SetCrossfadeSampleLength ( int length ) { mCrossfadeSampleLength = length; }
+    void SetMaxJumpDistanceSpace ( int distanceX1000 ) { mMaxJumpDistanceSpaceX1000 = distanceX1000; }
+    void SetMaxJumpTargets ( int targets ) { mMaxJumpTargets = targets; }
+    void SetVolumeX1000 (int volumeX1000) { mVolumeX1000 = volumeX1000; }
+    void SetDynamicPan ( bool enabled, int dimensionIndex ) { mDynamicPanEnabled = false; mDynamicPanDimensionIndex = dimensionIndex; mDynamicPanEnabled = enabled; }
+    void SetPanningStrengthX1000 ( int panStrengthX1000 ) { mPanningStrengthX1000 = panStrengthX1000; }
 
 private:
+    void FillAudioSegment ( ofSoundBuffer* outBuffer, size_t* outBufferPosition, Utilities::AudioPlayhead* playhead, bool outBufferFull );
+    void CrossfadeAudioSegment ( ofSoundBuffer* outBuffer, size_t* outBufferPosition, Utilities::AudioPlayhead* playhead, bool outBufferFull );
 
-	void FillAudioSegment ( ofSoundBuffer* outBuffer, size_t* outBufferPosition, Utils::AudioPlayhead* playhead, bool outBufferFull );
-	void CrossfadeAudioSegment ( ofSoundBuffer* outBuffer, size_t* outBufferPosition, size_t startSample_A, size_t endSample_A, size_t fileIndex_A, Utils::AudioPlayhead* playhead_B, size_t lengthSetting, bool outBufferFull );
+    void CalculateTriggerPoints ( Utilities::AudioPlayhead& playhead );
 
-	void CalculateTriggerPoints ( Utils::AudioPlayhead& playhead );
+    std::shared_ptr<RawView> mRawView;
+    std::shared_ptr<PointPicker> mPointPicker;
 
-	std::vector<Utils::AudioPlayhead> mPlayheads;
+    // TODO - apply a pause/unpause fade over the length of a single buffer
+    //bool audioPauseFadeApplied = false;
+    //bool audioUnpauseFadeApplied = false;
 
-	std::shared_ptr<RawView> mRawView;
-	std::shared_ptr<PointPicker> mPointPicker;
+    // TODO //implement stereo loading of source files, not just mono
+    // TODO //panning bias? to globally statically shift this acorex instance left/right
+    // TODO //pan smoothing? average dynamic pan position with the previous and next X segments
 
-	ofSoundStream mSoundStream;
+    // audio states ------------------------------
 
-	bool bStreamStarted = false;
+    ofSoundStream mSoundStream;
+    std::atomic<bool> bStreamStarted;
 
-	// settings -----------------------------------
-	
-	std::atomic<bool> mLoopPlayheads = false;
-	std::atomic<bool> mJumpSameFileAllowed = false;
-	std::atomic<int> mJumpSameFileMinTimeDiff = 2;
-	std::atomic<int> mCrossoverJumpChanceX1000 = 50;
-	std::atomic<int> mCrossfadeSampleLength = 256;
-	std::atomic<int> mMaxJumpDistanceSpaceX1000 = 50;
-	std::atomic<int> mMaxJumpTargets = 5;
+    std::mutex mKillAudioOnlyAudioThreadBlockingMutex;
 
-	// thread safety ------------------------------
+    std::mutex mRestartingAudioMutex;
+    std::atomic<bool> bRestartingAudioFlag;
+    std::atomic<bool> bRestartingAudioFlagConfirmed;
 
-	std::atomic<int> mActivePlayheads = 0;
+    std::mutex mMissingOutputMutex;
+    std::atomic<bool> bMissingOutputFlag;
+    std::atomic<bool> bMissingOutputFlagConfirmed;
 
-	std::mutex mNewPlayheadMutex;
-	std::queue<Utils::AudioPlayhead> mNewPlayheads;
-	std::queue<size_t> mPlayheadsToKill;
-	size_t playheadCounter = 0;
+    std::atomic<bool> bUserPauseFlag;
 
-	std::mutex mVisualPlayheadUpdateMutex;
-	std::vector<Utils::VisualPlayhead> mVisualPlayheads;
+    // playhead states ---------------------------
 
-	std::mutex mTimeCorpusMutex;
-	std::vector<ofMesh> mTimeCorpus;
+    std::vector<Utilities::AudioPlayhead> mPlayheads;
+    std::atomic<int> mActivePlayheads;
 
-	std::atomic<bool> bResetFlag = false;
+    std::mutex mNewPlayheadMutex;
+    std::queue<Utilities::AudioPlayhead> mNewPlayheads;
+    std::queue<size_t> mPlayheadsToKill;
+    size_t playheadCounter;
+
+    std::mutex mVisualPlayheadUpdateMutex;
+    std::vector<Utilities::VisualPlayhead> mVisualPlayheads;
+
+    // audio thread local copies ------------------
+
+    std::mutex mDimensionBoundsMutex;
+    Utilities::DimensionBoundsData mDimensionBounds;
+
+    std::mutex mCorpusMeshMutex;
+    std::vector<ofMesh> mCorpusMesh;
+
+    // settings -----------------------------------
+
+    std::atomic<bool> mLoopPlayheads;
+    std::atomic<bool> mJumpSameFileAllowed;
+    std::atomic<int> mJumpSameFileMinTimeDiff;
+    std::atomic<int> mCrossoverJumpChanceX1000;
+    std::atomic<int> mCrossfadeSampleLength;
+    std::atomic<int> mMaxJumpDistanceSpaceX1000;
+    std::atomic<int> mMaxJumpTargets;
+    std::atomic<int> mVolumeX1000;
+    std::atomic<bool> mDynamicPanEnabled;
+    std::atomic<int> mDynamicPanDimensionIndex;
+    std::atomic<int> mPanningStrengthX1000;
+
+    // Randomness ---------------------------------
+
+    std::mt19937 mRandomGen;
 };
 
 } // namespace Explorer

@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2024 Elowyn Fearne
+Copyright (c) 2024-2026 Elowyn Fearne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -14,136 +14,170 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTH
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "./RawView.h"
-#include <data/TensorTypes.hpp>
+#include "Explorer/RawView.h"
+
+#include <flucoma/data/TensorTypes.hpp>
 #include <ofSoundBuffer.h>
 #include <ofSystemUtils.h>
 #include <ofLog.h>
 
 using namespace Acorex;
 
+Explorer::RawView::RawView ( ) : mHopSize ( 512 ), mCorpusName ( "" )
+{
+    ClearCorpus ( );
+}
+
 bool Explorer::RawView::LoadCorpus ( )
 {
-	ofFileDialogResult corpusFile = ofSystemLoadDialog ( "Select corpus file" );
-	if ( !corpusFile.bSuccess )
-	{
-		ofLogError ( "RawView" ) << "Invalid load query";
-		return false;
-	}
-	
-	bool success = LoadCorpus ( corpusFile.getPath ( ), corpusFile.getName ( ) );
-	
-	return success;
+    ofFileDialogResult corpusFile = ofSystemLoadDialog ( "Select corpus file" );
+    if ( !corpusFile.bSuccess )
+    {
+        ofLogError ( "RawView" ) << "Invalid load query";
+        return false;
+    }
+    
+    bool success = LoadCorpus ( corpusFile.getPath ( ), corpusFile.getName ( ) );
+    
+    return success;
 }
 
 bool Explorer::RawView::LoadCorpus ( const std::string& path, const std::string& name )
 {
-	if ( name.find ( ".json" ) == std::string::npos )
-	{
-		ofLogError ( "RawView" ) << "Invalid file type";
-		return false;
-	}
-	if ( !ofFile::doesFileExist ( path ) )
-	{
-		ofLogError ( "RawView" ) << "File does not exist";
-		return false;
-	}
+    ClearCorpus ( );
 
-	bool success = mJSON.Read ( path, mDataset );
+    if ( name.find ( ".json" ) == std::string::npos )
+    {
+        ofLogError ( "RawView" ) << "Invalid file type";
+        return false;
+    }
+    if ( !ofFile::doesFileExist ( path ) )
+    {
+        ofLogError ( "RawView" ) << "File does not exist";
+        return false;
+    }
 
-	if ( !success ) { return success; }
+    bool success = mJSON.Read ( path, mDataset );
 
-	mCorpusName = name.substr ( 0, name.size ( ) - 5 );
+    if ( !success ) { return success; }
 
-	success = LoadAudioSet ( mDataset );
-	
-	return success;
+    success = LoadAudioSet ( mDataset );
+    
+    if ( success )
+    {
+        mHopSize = mDataset.analysisSettings.windowFFTSize / mDataset.analysisSettings.hopFraction;
+        mCorpusName = name.substr ( 0, name.size ( ) - 5 );
+    }
+    else
+    {
+        ClearCorpus ( );
+    }
+
+    return success;
 }
 
-bool Explorer::RawView::LoadAudioSet ( Utils::DataSet& dataset )
+void Explorer::RawView::ClearCorpus ( )
 {
-	dataset.audio.loaded.clear ( );
-	dataset.audio.raw.clear ( );
-
-	for ( int fileIndex = 0; fileIndex < dataset.fileList.size ( ); fileIndex++ )
-	{
-		fluid::RealVector fileData;
-
-		if ( !mAudioLoader.ReadAudioFile ( dataset.fileList[fileIndex], fileData, dataset.analysisSettings.sampleRate ) )
-		{
-			ofLogError ( "RawView" ) << "Failed to load audio file: " << dataset.fileList[fileIndex];
-			dataset.audio.loaded.push_back ( false );
-			dataset.audio.raw.push_back ( ofSoundBuffer ( ) );
-			continue;
-		}
-
-		ofSoundBuffer audioData;
-		audioData.copyFrom ( std::vector<float> ( fileData.begin ( ), fileData.end ( ) ), 1, dataset.analysisSettings.sampleRate );
-
-		dataset.audio.raw.push_back ( audioData );
-		dataset.audio.loaded.push_back ( true );
-	}
-	
-	bool failedToLoad = true;
-	for ( int i = 0; i < dataset.audio.loaded.size ( ); i++ )
-	{
-		if ( dataset.audio.loaded[i] )
-		{
-			failedToLoad = false;
-			break;
-		}
-	}
-
-	if ( failedToLoad )
-	{
-		ofLogError ( "RawView" ) << "Failed to load any audio files";
-		return false;
-	}
-
-	return true;
+    mCorpusName = "";
+    mDataset = { };
 }
 
-bool Explorer::RawView::IsTimeAnalysis ( ) const
+bool Explorer::RawView::LoadAudioSet ( Utilities::DataSet& dataset )
 {
-	return mDataset.analysisSettings.bTime;
+    dataset.audio.loaded.clear ( );
+    dataset.audio.raw.clear ( );
+
+    for ( int fileIndex = 0; fileIndex < dataset.fileList.size ( ); fileIndex++ )
+    {
+        fluid::RealVector fileData;
+
+        if ( !mAudioLoader.ReadAudioFile ( dataset.fileList[fileIndex], fileData, dataset.analysisSettings.sampleRate ) )
+        {
+            ofLogError ( "RawView" ) << "Failed to load audio file: " << dataset.fileList[fileIndex];
+            dataset.audio.loaded.push_back ( false );
+            dataset.audio.raw.push_back ( ofSoundBuffer ( ) );
+            continue;
+        }
+
+        ofSoundBuffer audioData;
+        audioData.copyFrom ( std::vector<float> ( fileData.begin ( ), fileData.end ( ) ), 1, dataset.analysisSettings.sampleRate );
+
+        dataset.audio.raw.push_back ( audioData );
+        dataset.audio.loaded.push_back ( true );
+    }
+    
+    bool failedToLoad = true;
+    for ( int i = 0; i < dataset.audio.loaded.size ( ); i++ )
+    {
+        if ( dataset.audio.loaded[i] )
+        {
+            failedToLoad = false;
+            break;
+        }
+    }
+
+    if ( failedToLoad )
+    {
+        ofLogError ( "RawView" ) << "Failed to load any audio files";
+        return false;
+    }
+
+    return true;
+}
+
+bool Explorer::RawView::IsLoaded ( ) const
+{
+    return !mCorpusName.empty ( ) && mDataset.fileList.size ( ) > 0;
 }
 
 bool Explorer::RawView::IsReduction ( ) const
 {
-	return mDataset.analysisSettings.hasBeenReduced;
+    return mDataset.analysisSettings.bIsReduction;
 }
 
 std::vector<std::string> Explorer::RawView::GetDimensions ( ) const
 {
-	return mDataset.dimensionNames;
-}
-
-std::vector<std::string> Explorer::RawView::GetStatistics ( ) const
-{
-	return mDataset.statisticNames;
+    return mDataset.dimensionNames;
 }
 
 std::string Explorer::RawView::GetCorpusName ( ) const
 {
-	return mCorpusName;
+    return mCorpusName;
 }
 
-Utils::AudioData* Explorer::RawView::GetAudioData ( )
+Utilities::AudioData* Explorer::RawView::GetAudioData ( )
 {
-	return &mDataset.audio;
+    return &mDataset.audio;
 }
 
-Utils::TimeData* Explorer::RawView::GetTimeData ( )
+size_t Acorex::Explorer::RawView::GetFileCount ( ) const
 {
-	return &mDataset.time;
+    return mDataset.fileList.size ( );
 }
 
-Utils::StatsData* Explorer::RawView::GetStatsData ( )
+size_t Acorex::Explorer::RawView::GetLoadedFileCount ( ) const
 {
-	return &mDataset.stats;
+    size_t count = 0;
+
+    for ( const auto& loaded : mDataset.audio.loaded )
+    {
+        if ( loaded ) { count++; }
+    }
+
+    return count;
 }
 
-Utils::DataSet* Explorer::RawView::GetDataset ( )
+Utilities::TrailData* Explorer::RawView::GetTrailData ( )
 {
-	return &mDataset;
+    return &mDataset.trails;
+}
+
+Utilities::DataSet* Explorer::RawView::GetDataset ( )
+{
+    return &mDataset;
+}
+
+size_t Explorer::RawView::GetHopSize ( ) const
+{
+    return mHopSize;
 }

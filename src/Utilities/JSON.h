@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2024 Elowyn Fearne
+Copyright (c) 2024-2026 Elowyn Fearne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -16,11 +16,12 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 
 #pragma once
 
-#include "Utils/Data.h"
+#include "Utilities/Data.h"
+
 #include <nlohmann/json.hpp>
 
 namespace Acorex {
-namespace Utils {
+namespace Utilities {
 
 class JSON {
 
@@ -31,13 +32,13 @@ class JSON {
 #define TO_A_SETTINGS( x ) j.at ( #x ).get_to ( a.analysisSettings.x )
 
 public:
-	JSON ( ) { };
-	~JSON ( ) { };
+    JSON ( ) { };
+    ~JSON ( ) { };
 
-	bool Write ( const std::string& outputFile, const DataSet& dataset );
+    bool Write ( const std::string& outputFile, const DataSet& dataset );
 
-	bool Read ( const std::string& inputFile, DataSet& dataset );
-	bool Read ( const std::string& inputFile, AnalysisSettings& settings );
+    bool Read ( const std::string& inputFile, DataSet& dataset );
+    bool Read ( const std::string& inputFile, AnalysisSettings& settings );
 };
 
 void to_json ( nlohmann::json& j, const DataSet& a );
@@ -46,5 +47,5 @@ void from_json ( const nlohmann::json& j, DataSet& a );
 void to_json ( nlohmann::json& j, const AnalysisSettings& a );
 void from_json ( const nlohmann::json& j, AnalysisSettings& a );
 
-} // namespace Utils
+} // namespace Utilities
 } // namespace Acorex

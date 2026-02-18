@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2024 Elowyn Fearne
+Copyright (c) 2024-2026 Elowyn Fearne
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -16,15 +16,16 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 
 #pragma once
 
-#include "Utils/Data.h"
-#include "Utils/DatasetConversion.h"
-#include <algorithms/public/UMAP.hpp>
+#include "Utilities/Data.h"
+#include "Utilities/DatasetConversion.h"
+
+#include <flucoma/algorithms/public/UMAP.hpp>
 #include <Eigen/Core>
-#include <data/FluidDataSet.hpp>
-#include <data/FluidIndex.hpp>
-#include <data/FluidJSON.hpp>
-#include <data/FluidMemory.hpp>
-#include <data/TensorTypes.hpp>
+#include <flucoma/data/FluidDataSet.hpp>
+#include <flucoma/data/FluidIndex.hpp>
+#include <flucoma/data/FluidJSON.hpp>
+#include <flucoma/data/FluidMemory.hpp>
+#include <flucoma/data/TensorTypes.hpp>
 #include <vector>
 
 namespace Acorex {
@@ -35,14 +36,14 @@ public:
     UMAP ( ) { };
     ~UMAP ( ) { };
 
-    bool Fit ( Utils::DataSet& dataset, const Utils::ReductionSettings& settings );
+    bool Fit ( Utilities::DataSet& dataset, const Utilities::ReductionSettings& settings );
 
 private:
 
-    void ExtractTimeDimension ( Utils::DataSet& dataset, std::vector<double>& timeDimension );
-    void InsertTimeDimension ( Utils::DataSet& dataset, const std::vector<double>& timeDimension );
+    void ExtractTimeDimension ( Utilities::DataSet& dataset, std::vector<double>& timeDimension );
+    void InsertTimeDimension ( Utilities::DataSet& dataset, const std::vector<double>& timeDimension );
 
-    Utils::DatasetConversion mConversion;
+    Utilities::DatasetConversion mConversion;
 };
 
 } // namespace Analyser
